@@ -9,7 +9,7 @@ function inclineDrawing(): SVGElement[] {
   const ang = (Math.atan2(y1 - y0, x1 - x0) * 180) / Math.PI
   const cx = 150, cy = y0 + ((cx - x0) / (x1 - x0)) * (y1 - y0)
   const marks: SVGElement[] = []
-  for (let i = 0; i <= 8; i++) {
+  for (let i = 0; i <= 7; i++) {
     const x = x0 + 20 + i * 27, y = y0 + ((x - x0) / (x1 - x0)) * (y1 - y0)
     marks.push(svg('line', { x1: x, y1: y + 5, x2: x, y2: y + 10, class: 'th-line' }))
   }
@@ -17,6 +17,8 @@ function inclineDrawing(): SVGElement[] {
     svg('line', { x1: 0, y1: 104, x2: W, y2: 104, class: 'th-ground' }),
     svg('rect', { x: x0 - 4, y: y0 + 4, width: 5, height: 100 - y0, class: 'th-leg' }),
     svg('rect', { x: x0 - 22, y: 100, width: 44, height: 4, rx: 2, class: 'th-leg' }),
+    svg('rect', { x: x1 - 4, y: y1 + 4, width: 5, height: 100 - y1 - 4, class: 'th-leg' }),
+    svg('rect', { x: x1 - 18, y: 100, width: 32, height: 4, rx: 2, class: 'th-leg' }),
     svg('line', { x1: x0, y1: y0, x2: x1, y2: y1, class: 'th-rail' }),
     ...marks,
     svg('g', { transform: `translate(${cx} ${cy}) rotate(${ang})` },
@@ -50,6 +52,8 @@ function pulleyDrawing(): SVGElement[] {
     svg('line', { x1: 0, y1: fy, x2: W, y2: fy, class: 'th-ground' }),
     svg('rect', { x: x0 - 3, y: ty + 4, width: 5, height: fy - ty - 4, class: 'th-leg' }),
     svg('rect', { x: x0 - 20, y: fy - 4, width: 40, height: 4, rx: 2, class: 'th-leg' }),
+    svg('rect', { x: x1 - 17, y: ty + 4, width: 5, height: fy - ty - 4, class: 'th-leg' }),
+    svg('rect', { x: x1 - 32, y: fy - 4, width: 34, height: 4, rx: 2, class: 'th-leg' }),
     svg('line', { x1: x0, y1: ty, x2: x1, y2: ty, class: 'th-rail' }),
     svg('rect', { x: 92, y: ty - 18, width: 44, height: 13, rx: 4, class: 'th-body' }),
     svg('rect', { x: 128, y: ty - 18, width: 8, height: 13, rx: 3, class: 'th-accent' }),
@@ -80,37 +84,35 @@ function blockDrawing(): SVGElement[] {
 }
 
 function springDrawing(): SVGElement[] {
-  // a support bar, a coil spring hanging from it, a phone at the end and a dotted arc for its swing
-  const cx = 160, top = 14
-  const pts: string[] = [`${cx},${top}`, `${cx},${top + 8}`]
-  const n = 9, y0 = top + 8, y1 = 70
+  // a support bar, a short coil spring hanging from it, a phone at the end, a ghost phone and one dotted arc for the swing
+  const cx = 160, top = 14, y0 = top + 8, y1 = 54, n = 7
+  const pts: string[] = [`${cx},${top}`, `${cx},${y0}`]
   for (let i = 0; i < n; i++) {
     const y = y0 + ((i + 0.5) / n) * (y1 - y0)
     pts.push(`${cx + (i % 2 === 0 ? 12 : -12)},${y.toFixed(1)}`)
   }
   pts.push(`${cx},${y1}`)
+  const R = 88, a = (42 * Math.PI) / 180
+  const ax = R * Math.sin(a), ay = top + R * Math.cos(a)
   return [
     svg('rect', { x: cx - 46, y: top - 6, width: 92, height: 6, rx: 2, class: 'th-leg' }),
+    svg('path', { d: `M ${cx - ax} ${ay} A ${R} ${R} 0 0 0 ${cx + ax} ${ay}`, class: 'th-dots', fill: 'none' }),
+    svg('rect', { x: cx - 13, y: y1, width: 26, height: 36, rx: 5, class: 'th-ghost', transform: `rotate(-38 ${cx} ${top})` }),
     svg('polyline', { points: pts.join(' '), class: 'th-spring', fill: 'none' }),
-    svg('path', { d: `M ${cx - 60} 100 A 70 70 0 0 0 ${cx + 60} 100`, class: 'th-dots', fill: 'none' }),
-    svg('rect', { x: cx - 13, y: y1, width: 26, height: 42, rx: 5, class: 'th-body' }),
+    svg('rect', { x: cx - 13, y: y1, width: 26, height: 36, rx: 5, class: 'th-body' }),
     svg('rect', { x: cx - 13, y: y1, width: 26, height: 7, rx: 3, class: 'th-accent' }),
-    svg('line', { x1: cx - 5, y1: y1 + 34, x2: cx + 5, y2: y1 + 34, class: 'th-line' }),
+    svg('line', { x1: cx - 5, y1: y1 + 28, x2: cx + 5, y2: y1 + 28, class: 'th-line' }),
   ]
 }
 
 function cartPendulumDrawing(): SVGElement[] {
-  // an inclined plane, a cart on it with a small bracket on top, and a short rod hanging DOWN from the bracket
-  // (vertical-ish in the lab frame, so visibly tilted away from the track normal)
+  // an inclined plane, a cart on it carrying a small gantry (two columns and a beam) and a pendulum hanging from the
+  // middle of the beam: vertical in the lab frame plus a swing, so it is visibly tilted away from the frame's axis
   const x0 = 30, y0 = 40, x1 = 290, y1 = 104
   const angR = Math.atan2(y1 - y0, x1 - x0), ang = (angR * 180) / Math.PI
   const cx = 150, cy = y0 + ((cx - x0) / (x1 - x0)) * (y1 - y0)
-  // pivot at the top of the bracket, in cart coordinates (x along the track, y -up the normal), then to the lab frame
-  const px = 4, py = -56
-  const pivX = cx + px * Math.cos(angR) - py * Math.sin(angR)
-  const pivY = cy + px * Math.sin(angR) + py * Math.cos(angR)
-  const swing = (8 * Math.PI) / 180, len = 24
-  const bobX = pivX - len * Math.sin(swing), bobY = pivY + len * Math.cos(swing)
+  const pivY = -53, len = 27, tilt = (20 * Math.PI) / 180 // in cart coordinates: 20 degrees from the frame's downward axis, toward the uphill side
+  const bobX = -len * Math.sin(tilt), bobY = pivY + len * Math.cos(tilt)
   return [
     svg('line', { x1: 0, y1: 108, x2: W, y2: 108, class: 'th-ground' }),
     svg('polygon', { points: `${x0},${y0} ${x1},${y1} ${x0},${y1}`, class: 'th-wedge' }),
@@ -119,44 +121,52 @@ function cartPendulumDrawing(): SVGElement[] {
       svg('rect', { x: -26, y: -20, width: 52, height: 14, rx: 4, class: 'th-body' }),
       svg('circle', { cx: -15, cy: -6, r: 4.5, class: 'th-wheel' }),
       svg('circle', { cx: 15, cy: -6, r: 4.5, class: 'th-wheel' }),
-      // bracket: a post up from the cart and a short arm over it
-      svg('rect', { x: -4, y: -56, width: 3, height: 36, class: 'th-leg' }),
-      svg('rect', { x: -4, y: -58, width: 16, height: 3, rx: 1.5, class: 'th-leg' })),
-    svg('line', { x1: pivX, y1: pivY, x2: bobX, y2: bobY, class: 'th-line' }),
-    svg('circle', { cx: bobX, cy: bobY, r: 5, class: 'th-accent' }),
+      svg('rect', { x: -21, y: -56, width: 3, height: 36, class: 'th-leg' }),
+      svg('rect', { x: 18, y: -56, width: 3, height: 36, class: 'th-leg' }),
+      svg('rect', { x: -21, y: -56, width: 42, height: 3, rx: 1.5, class: 'th-leg' }),
+      svg('line', { x1: 0, y1: pivY, x2: bobX, y2: bobY, class: 'th-line' }),
+      svg('circle', { cx: 0, cy: pivY, r: 2, class: 'th-wheel' }),
+      svg('circle', { cx: bobX, cy: bobY, r: 5, class: 'th-accent' })),
   ]
 }
 
 function crystalDrawing(): SVGElement[] {
-  // a square lattice of atoms, an incoming beam and a reflected beam at the same angle
+  // a crystal block with a square lattice; the incident and the reflected ray make equal angles with the top plane
+  // and meet on an atom of the top row
+  const ax0 = 112, dx = 24, rowY = [64, 80, 96]
   const atoms: SVGElement[] = []
-  for (let r = 0; r < 3; r++) for (let c = 0; c < 6; c++) atoms.push(svg('circle', { cx: 150 + c * 26, cy: 58 + r * 20, r: 4.5, class: r === 0 ? 'th-accent' : 'th-wheel' }))
+  rowY.forEach((y, r) => { for (let c = 0; c < 5; c++) atoms.push(svg('circle', { cx: ax0 + c * dx, cy: y, r: 4.5, class: r === 0 ? 'th-accent' : 'th-wheel' })) })
+  const px = ax0 + 2 * dx, py = rowY[0]!, th = (28 * Math.PI) / 180, run = 66, cos = Math.cos(th), sin = Math.sin(th)
+  const stop = 7 // the rays end at the atom's edge
   return [
-    svg('rect', { x: 134, y: 48, width: 150, height: 62, rx: 6, class: 'th-body', fill: 'none' }),
+    svg('rect', { x: 90, y: 48, width: 140, height: 64, rx: 6, class: 'th-body', fill: 'none' }),
+    svg('line', { x1: 98, y1: py, x2: 222, y2: py, class: 'th-line', 'stroke-dasharray': '2 4' }),
     ...atoms,
-    svg('line', { x1: 16, y1: 4, x2: 168, y2: 58, class: 'th-beam' }),
-    svg('line', { x1: 168, y1: 58, x2: 304, y2: 8, class: 'th-beam th-beam-out' }),
-    svg('path', { d: 'M 132 52 A 38 38 0 0 1 140 68', class: 'th-line', fill: 'none' }),
+    svg('line', { x1: px - run, y1: py - run * Math.tan(th), x2: px - stop * cos, y2: py - stop * sin, class: 'th-beam' }),
+    svg('line', { x1: px + stop * cos, y1: py - stop * sin, x2: px + run, y2: py - run * Math.tan(th), class: 'th-beam th-beam-out' }),
   ]
 }
 
 function photocellDrawing(): SVGElement[] {
-  // a glass bulb with a cathode plate and an anode ring, light arriving from the left, a wire out to the right
+  // light arriving from the left onto the cathode plate of a glass bulb, a ring anode, and the external circuit
+  // leaving the bulb at two points and passing below it, with a small meter
+  const o = 20, bx = 180 + o, by = 46, cathX = 158 + o, anX = 198 + o, wy = 102
+  const ray = (y: number) => [
+    svg('line', { x1: 14 + o, y1: y, x2: cathX - 12, y2: y, class: 'th-beam' }),
+    svg('polygon', { points: `${cathX - 4},${y} ${cathX - 13},${y - 4} ${cathX - 13},${y + 4}`, class: 'th-accent' }),
+  ]
   return [
-    svg('line', { x1: 0, y1: 108, x2: W, y2: 108, class: 'th-ground' }),
-    svg('line', { x1: 20, y1: 26, x2: 112, y2: 52, class: 'th-beam' }),
-    svg('line', { x1: 20, y1: 48, x2: 112, y2: 60, class: 'th-beam' }),
-    svg('line', { x1: 20, y1: 70, x2: 112, y2: 68, class: 'th-beam' }),
-    svg('circle', { cx: 190, cy: 60, r: 46, class: 'th-body' }),
-    svg('rect', { x: 150, y: 36, width: 7, height: 48, rx: 3, class: 'th-accent' }),
-    svg('ellipse', { cx: 216, cy: 60, rx: 6, ry: 18, class: 'th-ring' }),
-    svg('line', { x1: 153, y1: 84, x2: 153, y2: 100, class: 'th-line' }),
-    svg('line', { x1: 153, y1: 100, x2: 296, y2: 100, class: 'th-line' }),
-    svg('line', { x1: 222, y1: 60, x2: 296, y2: 60, class: 'th-line' }),
-    svg('line', { x1: 296, y1: 60, x2: 296, y2: 100, class: 'th-line' }),
-    svg('circle', { cx: 164, cy: 56, r: 3, class: 'th-dot' }),
-    svg('circle', { cx: 184, cy: 50, r: 3, class: 'th-dot' }),
-    svg('circle', { cx: 200, cy: 58, r: 3, class: 'th-dot' }),
+    svg('circle', { cx: bx, cy: by, r: 38, class: 'th-body' }),
+    ...[30, 46, 62].flatMap(ray),
+    svg('rect', { x: cathX, y: 28, width: 6, height: 36, rx: 3, class: 'th-accent' }),
+    svg('ellipse', { cx: anX, cy: by, rx: 5, ry: 14, class: 'th-ring' }),
+    svg('circle', { cx: cathX + 11, cy: 40, r: 2.5, class: 'th-dot' }),
+    svg('circle', { cx: cathX + 18, cy: 46, r: 2.5, class: 'th-dot' }),
+    svg('circle', { cx: cathX + 25, cy: 52, r: 2.5, class: 'th-dot' }),
+    svg('polyline', { points: `${cathX + 3},64 ${cathX + 3},${wy} ${bx - 8},${wy}`, class: 'th-line', fill: 'none' }),
+    svg('polyline', { points: `${bx + 8},${wy} ${anX},${wy} ${anX},${by + 14}`, class: 'th-line', fill: 'none' }),
+    svg('circle', { cx: bx, cy: wy, r: 8, class: 'th-body' }),
+    svg('line', { x1: bx, y1: wy + 4, x2: bx + 4, y2: wy - 3, class: 'th-needle', 'stroke-width': 1.8 }),
   ]
 }
 

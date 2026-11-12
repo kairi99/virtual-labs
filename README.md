@@ -8,10 +8,10 @@ copied into the hub's `dist/` by `scripts/assemble.mjs`.
 |---|---|
 | `/` | laboratory chooser |
 | `/mechanics/`, `/atomic/` | experiment cards of a lab |
-| `/mechanics/mruv/`, `/mechanics/parabolico/`, `/mechanics/segunda-ley/`, `/mechanics/rozamiento/` | [mecanica-labs](https://github.com/kairi99/mecanica-labs) |
-| `/mechanics/parametric-resonance/` | [parametricResonance](https://github.com/kairi99/parametricResonance) (`simulator/`) |
-| `/atomic/x-ray/` | [AtomicSimulation](https://github.com/kairi99/AtomicSimulation) (`web/`) |
-| `/atomic/photoelectric/` | [photoelectric-sim](https://github.com/kairi99/photoelectric-sim) |
+| `/mechanics/mruv/`, `/mechanics/parabolico/`, `/mechanics/segunda-ley/`, `/mechanics/rozamiento/`, `/mechanics/pendulum-incline/` | mecanica-labs (private) |
+| `/mechanics/parametric-resonance/` | parametricResonance (`simulator/`, private) |
+| `/atomic/x-ray/` | AtomicSimulation (`web/`, private) |
+| `/atomic/photoelectric/` | photoelectric-sim (private) |
 
 Hosted here, the three simulations without their own link back (parametricResonance, AtomicSimulation, photoelectric-sim)
 show an "All experiments" link to their lab page: `assemble` sets `<meta name="vlabs-home" content="">` to `../` in the copied
@@ -48,13 +48,30 @@ into `dist/atomic/x-ray/`, `photoelectric-sim/dist` into `dist/atomic/photoelect
 folder or build is missing, and refuses to overwrite a file that is already in `dist/`. The hub keeps its own files in
 `dist/hub-assets/` so they cannot clash with mecanica-labs' `assets/` and `favicon.svg`.
 
-Deploy: `.github/workflows/deploy.yml` checks out the five repos side by side, tests, assembles and publishes to GitHub
+Deploy: `.github/workflows/deploy.yml` checks out the five repos side by side (the four sources are private, so each is
+checked out over SSH with a read-only deploy key), tests, assembles and publishes to GitHub
 Pages on push to main, manually, nightly, and on `repository_dispatch` type `sim-updated` (a source repo can trigger it
 with `gh api repos/kairi99/virtual-labs/dispatches -f event_type=sim-updated`, using a token with access to this repo).
 
+### Deploy keys (secrets of this repository)
+
+For each source repo, create a key pair (`ssh-keygen -t ed25519 -N '' -f key`), add the public half as a read-only
+**deploy key** of that source repo (Settings, Deploy keys, leave "Allow write access" off), and store the private half
+as an Actions secret of `kairi99/virtual-labs`:
+
+| Secret | Source repository |
+|---|---|
+| `DEPLOY_KEY_MECANICA_LABS` | kairi99/mecanica-labs |
+| `DEPLOY_KEY_PARAMETRIC_RESONANCE` | kairi99/parametricResonance |
+| `DEPLOY_KEY_ATOMIC_SIMULATION` | kairi99/AtomicSimulation |
+| `DEPLOY_KEY_PHOTOELECTRIC_SIM` | kairi99/photoelectric-sim |
+
+`test.yml` (pull requests) tests and builds the hub only and needs no secrets. A source repo's `repository_dispatch`
+trigger still works: the dispatch token only needs access to this repo.
+
 ## Add an experiment
 
-1. Add an entry to the lab's `experiments` in `src/labs.ts`: `id`, `slug`, `title`, `summary` (both languages), `thumb`,
+1. Add an entry to the lab's `experiments` in `src/labs.ts`: `id`, `slug`, `title`, `summary`, `topic` (all in both languages), `thumb`,
    `status`, and `source` (repo, build command and output folder, or a plain `folder`).
 2. If it needs a new card drawing, add a `ThumbKind` and a function in `src/thumbs.ts`.
 3. If it is in a new repo, add the checkout to `deploy.yml`.

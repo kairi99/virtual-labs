@@ -1,16 +1,27 @@
 // Both kinds of page, picked by <body data-page>: the lab chooser ("chooser") and a lab's experiment list ("lab",
-// with data-lab=<slug>). No router: each page is a real HTML file. English first, ES toggle, theme toggle.
+// with data-lab=<slug>). No router: each page is a real HTML file. English first, EN|ES switch, theme toggle.
 import './styles/tokens.css'
 import './styles/app.css'
 import './styles/hub.css'
-import { button, el } from './dom.ts'
+import { el, svg } from './dom.ts'
 import { fmt, t } from './i18n.ts'
-import { labs, readyCount, repoUrl, sourceRepos, type Lab, type Lang } from './labs.ts'
+import { labs, readyCount, type Experiment, type Lab, type Lang } from './labs.ts'
 import { chooserHref, experimentHref, labHref } from './links.ts'
 import { loadLang, loadTheme, saveLang, saveTheme, type Theme } from './persist.ts'
 import { S } from './strings.ts'
 import { applyTheme, nextTheme, themeIcon } from './theme.ts'
 import { thumb } from './thumbs.ts'
+
+const ISSUES_URL = 'https://github.com/kairi99/virtual-labs/issues'
+
+/** The header mark: a pendulum (same drawing as hub-assets/favicon.svg). */
+function brandMark(): SVGElement {
+  return svg('svg', { viewBox: '0 0 24 24', 'aria-hidden': 'true', class: 'lp-mark' },
+    svg('path', { d: 'M4 4h16', fill: 'none', stroke: 'currentColor', 'stroke-width': 2, 'stroke-linecap': 'round' }),
+    svg('path', { d: 'M12 4l-5 11', fill: 'none', stroke: 'currentColor', 'stroke-width': 1.6, 'stroke-linecap': 'round' }),
+    svg('circle', { cx: 6.2, cy: 17, r: 3.4, fill: 'var(--accent)' }),
+    svg('path', { d: 'M13 20a8 8 0 0 0 7-6', fill: 'none', stroke: 'currentColor', 'stroke-width': 1.4, 'stroke-linecap': 'round', 'stroke-dasharray': '0.1 3' }))
+}
 
 function run(): void {
   const page = document.body.dataset.page
@@ -21,10 +32,18 @@ function run(): void {
   const root = document.getElementById('app')!
   const header = el('header', 'lp-top')
   const brand = el('a', 'lp-brand', undefined, { href: chooserHref(lang) })
+  const brandText = el('span')
+  brand.append(brandMark(), brandText)
   const tools = el('div', 'lp-tools')
-  const langBtn = button('', 'lp-tool')
-  const themeBtn = button('', 'lp-tool')
-  tools.append(langBtn, themeBtn)
+  const langGroup = el('div', 'lp-seg', undefined, { role: 'group' })
+  const langBtns = (['en', 'es'] as const).map((l) => {
+    const b = el('button', 'lp-seg-btn', l.toUpperCase(), { type: 'button', lang: l })
+    b.addEventListener('click', () => { lang = l; saveLang(lang); label() })
+    langGroup.append(b)
+    return { l, b }
+  })
+  const themeBtn = el('button', 'lp-tool', undefined, { type: 'button' })
+  tools.append(langGroup, themeBtn)
   header.append(brand, tools)
 
   const main = el('main', 'lp-main', undefined, { id: 'main', tabindex: '-1' })
@@ -34,52 +53,38 @@ function run(): void {
   const sub = el('p', 'lp-sub')
   if (lab) hero.append(back)
   hero.append(h1, sub)
-  const grid = el('ul', 'lp-grid')
+  const grid = el('ul', lab ? 'lp-grid' : 'lp-grid lp-grid-labs')
   main.append(hero, grid)
 
   const footer = el('footer', 'credits lp-credits')
   const creditsText = el('p')
-  const srcNav = el('nav')
-  const srcList = el('ul', 'lp-source-list')
-  srcNav.append(srcList)
-  footer.append(creditsText, srcNav)
+  const report = el('a', undefined, undefined, { href: ISSUES_URL, rel: 'noopener' })
+  footer.append(creditsText, report)
 
   const skip = el('a', 'skip-link', undefined, { href: '#main' })
   skip.addEventListener('click', (e) => { e.preventDefault(); main.focus() })
   root.append(skip, header, main, footer)
 
-  const repoLinks = sourceRepos().map((repo) => {
-    const a = el('a', undefined, repo, { href: repoUrl(repo), rel: 'noopener' })
-    const li = el('li')
-    li.append(a)
-    srcList.append(li)
-    return a
-  })
-
-  // ---- cards ----
-  interface Card { title: HTMLElement; summary: HTMLElement; meta: HTMLElement; action: HTMLElement; count?: HTMLElement; guide?: HTMLElement; link?: HTMLAnchorElement; titleText: (l: Lang) => string; href?: (l: Lang) => string; soon: boolean }
+  // ---- cards: one real link per card (the title link is stretched over the card by CSS) ----
+  interface Card { title: HTMLElement; summary: HTMLElement; kicker: HTMLElement; action: HTMLElement; link?: HTMLAnchorElement; list?: HTMLUListElement; soon: boolean; href?: (l: Lang) => string }
   const cards: Card[] = []
-  function addCard(opts: { thumbKind: Parameters<typeof thumb>[0]; titleText: Card['titleText']; href?: (l: Lang) => string; soon: boolean; guideN?: number; countN?: number; id: string }): void {
+  function addCard(opts: { thumbKind: Parameters<typeof thumb>[0]; href?: (l: Lang) => string; soon: boolean; withList: boolean; id: string }): void {
     const li = el('li')
-    const article = el('article', `lp-card${opts.soon ? ' lp-card-soon' : ''}`, undefined, { 'data-id': opts.id })
-    const meta = el('div', 'lp-meta')
+    const article = el('article', `lp-card${opts.soon ? ' lp-card-soon' : ''}${opts.withList ? ' lp-card-lab' : ''}`, undefined, { 'data-id': opts.id })
+    const body = el('div', 'lp-body')
+    const kicker = el('p', 'lp-kicker')
     const title = el('h2', 'lp-title')
     const summary = el('p', 'lp-summary')
-    const c: Card = { title, summary, meta, action: title, titleText: opts.titleText, href: opts.href, soon: opts.soon }
-    if (opts.guideN !== undefined) { c.guide = el('span', 'lp-guide'); meta.append(c.guide) }
-    if (opts.countN !== undefined) { c.count = el('span', 'chip'); meta.append(c.count) }
-    if (opts.soon) {
-      const chip = el('span', 'chip')
-      chip.dataset.soon = '1'
-      meta.append(chip)
-      c.action = chip
-      // a "soon" card is visible but not a link, not focusable and not a button
-    } else {
-      c.link = el('a', 'btn btn-primary lp-action')
-      c.action = c.link
-    }
-    article.append(thumb(opts.thumbKind), meta, title, summary)
-    if (c.link) article.append(c.link)
+    const c: Card = { title, summary, kicker, action: el('span', opts.soon ? 'chip' : 'btn btn-primary lp-action'), soon: opts.soon, href: opts.href }
+    if (!opts.soon) {
+      c.link = el('a', 'lp-link')
+      title.append(c.link)
+      c.action.setAttribute('aria-hidden', 'true')
+    } else c.action.dataset.soon = '1'
+    body.append(kicker, title, summary)
+    if (opts.withList) { c.list = el('ul', 'lp-inside'); body.append(c.list) }
+    body.append(c.action)
+    article.append(thumb(opts.thumbKind), body)
     li.append(article)
     grid.append(li)
     cards.push(c)
@@ -87,28 +92,20 @@ function run(): void {
 
   if (lab) {
     for (const x of lab.experiments) {
-      addCard({
-        id: x.id, thumbKind: x.thumb, soon: x.status === 'soon', guideN: x.guide,
-        titleText: (l) => t(x.title, l),
-        href: x.status === 'ready' ? (l) => experimentHref(x, l) : undefined,
-      })
+      addCard({ id: x.id, thumbKind: x.thumb, soon: x.status === 'soon', withList: false, href: x.status === 'ready' ? (l) => experimentHref(x, l) : undefined })
     }
   } else {
-    for (const l of labs) {
-      addCard({
-        id: l.id, thumbKind: l.experiments[0]!.thumb, soon: false, countN: readyCount(l),
-        titleText: (lg) => t(l.title, lg), href: (lg) => labHref(l, lg),
-      })
-    }
+    for (const l of labs) addCard({ id: l.id, thumbKind: l.experiments[0]!.thumb, soon: false, withList: true, href: (lg) => labHref(l, lg) })
   }
 
   // ---- text ----
   function label(): void {
     document.documentElement.lang = lang
     const site = t(S.siteName, lang)
-    brand.textContent = site
+    brandText.textContent = site
     brand.setAttribute('href', lab ? chooserHref(lang) : `./?lang=${lang}`)
-    brand.setAttribute('aria-label', site)
+    const desc = lab ? t(lab.summary, lang) : t(S.chooserSub, lang)
+    document.querySelector('meta[name="description"]')?.setAttribute('content', desc)
     if (lab) {
       document.title = `${t(lab.title, lang)} · ${site}`
       h1.textContent = t(lab.title, lang)
@@ -118,43 +115,42 @@ function run(): void {
       back.setAttribute('aria-label', t(S.backAria, lang))
       main.setAttribute('aria-label', t(S.experimentsRegion, lang))
     } else {
-      document.title = `${site}`
+      document.title = site
       h1.textContent = t(S.chooserTitle, lang)
       sub.textContent = t(S.chooserSub, lang)
       main.setAttribute('aria-label', t(S.labsRegion, lang))
     }
     skip.textContent = t(S.skip, lang)
     creditsText.textContent = t(S.credits, lang)
-    srcNav.setAttribute('aria-label', t(S.sourcesAria, lang))
-    srcNav.setAttribute('title', t(S.sources, lang))
-    for (const a of repoLinks) a.setAttribute('aria-label', `${t(S.sources, lang)}: ${a.textContent}`)
-    langBtn.textContent = lang === 'es' ? 'EN' : 'ES'
-    langBtn.setAttribute('aria-label', `${langBtn.textContent}: ${t(S.langSwitch, lang)}`)
+    report.textContent = t(S.report, lang)
+    langGroup.setAttribute('aria-label', t(S.language, lang))
+    for (const { l, b } of langBtns) b.setAttribute('aria-pressed', String(l === lang))
     themeBtn.replaceChildren(themeIcon(theme))
     const th = `${t(S.theme, lang)}: ${t(S.themes[theme], lang)}`
     themeBtn.setAttribute('aria-label', th)
     themeBtn.title = th
 
-    const items = lab ? lab.experiments : labs
+    const items: readonly (Lab | Experiment)[] = lab ? lab.experiments : labs
     cards.forEach((c, i) => {
       const item = items[i]!
-      const title = c.titleText(lang)
-      c.title.textContent = title
+      ;(c.link ?? c.title).textContent = t(item.title, lang)
       c.summary.textContent = t(item.summary, lang)
-      if (c.guide && 'guide' in item && item.guide !== undefined) c.guide.textContent = fmt(t(S.guide, lang), { n: item.guide })
-      if (c.count && 'experiments' in item) {
+      if ('experiments' in item) {
         const n = readyCount(item)
-        c.count.textContent = fmt(t(n === 1 ? S.experimentCount.one : S.experimentCount.many, lang), { n })
+        c.kicker.textContent = fmt(t(n === 1 ? S.experimentCount.one : S.experimentCount.many, lang), { n })
+        c.list?.replaceChildren(...item.experiments.filter((x) => x.status === 'ready').map((x) => el('li', undefined, t(x.title, lang))))
+        c.list?.setAttribute('aria-label', t(S.inside, lang))
+      } else {
+        const topic = t(item.topic, lang)
+        c.kicker.textContent = item.guide !== undefined ? `${fmt(t(S.guide, lang), { n: item.guide })} · ${topic}` : topic
       }
       if (c.soon) c.action.textContent = t(S.soon, lang)
       else if (c.link && c.href) {
         c.link.setAttribute('href', c.href(lang))
-        c.link.textContent = lab ? t(S.open, lang) : t(S.enterLab, lang)
-        c.link.setAttribute('aria-label', fmt(t(lab ? S.openAria : S.enterLabAria, lang), { title }))
+        c.action.textContent = lab ? t(S.open, lang) : t(S.enterLab, lang)
       }
     })
   }
-  langBtn.addEventListener('click', () => { lang = lang === 'es' ? 'en' : 'es'; saveLang(lang); label() })
   themeBtn.addEventListener('click', () => { theme = nextTheme(theme); saveTheme(theme); applyTheme(theme); label() })
   applyTheme(theme)
   label()

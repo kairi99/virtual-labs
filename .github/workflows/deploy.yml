@@ -1,5 +1,6 @@
 name: deploy
 
+# The four source repositories are private: each is checked out with its own read-only SSH deploy key (see README).
 # Builds the hub and the four source simulations (checked out next to it) and publishes the assembled dist/ to GitHub Pages.
 # Triggers: push to main, manual run, a nightly build, and `repository_dispatch` of type `sim-updated` (a source repo
 # can send it after its own deploy, see README).
@@ -32,18 +33,22 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: kairi99/mecanica-labs
+          ssh-key: ${{ secrets.DEPLOY_KEY_MECANICA_LABS }}
           path: mecanica-labs
       - uses: actions/checkout@v7
         with:
           repository: kairi99/parametricResonance
+          ssh-key: ${{ secrets.DEPLOY_KEY_PARAMETRIC_RESONANCE }}
           path: parametricResonance
       - uses: actions/checkout@v7
         with:
           repository: kairi99/AtomicSimulation
+          ssh-key: ${{ secrets.DEPLOY_KEY_ATOMIC_SIMULATION }}
           path: AtomicSimulation
       - uses: actions/checkout@v7
         with:
           repository: kairi99/photoelectric-sim
+          ssh-key: ${{ secrets.DEPLOY_KEY_PHOTOELECTRIC_SIM }}
           path: photoelectric-sim
       - uses: actions/setup-node@v7
         with:

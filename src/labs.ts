@@ -31,6 +31,8 @@ export interface Experiment {
   slug: string
   title: Text
   summary: Text
+  /** Short subject shown above the title on the card. */
+  topic: Text
   /** Number of the lab guide ("Práctica n"), when the experiment follows one. */
   guide?: number
   thumb: ThumbKind
@@ -66,6 +68,7 @@ export const labs: Lab[] = [
     experiments: [
       {
         id: 'mruv', slug: 'mruv', guide: 1, thumb: 'incline', status: 'ready', source: mecanica,
+        topic: { en: 'Kinematics', es: 'Cinemática' },
         title: { en: 'Uniformly accelerated rectilinear motion', es: 'Movimiento rectilíneo uniformemente variado' },
         summary: {
           en: 'A DigiCart rolls down an inclined rail: assemble the setup, time it, measure and analyse the acceleration.',
@@ -74,6 +77,7 @@ export const labs: Lab[] = [
       },
       {
         id: 'parabolic', slug: 'parabolico', guide: 2, thumb: 'arc', status: 'ready', source: mecanica,
+        topic: { en: 'Kinematics in 2D', es: 'Cinemática en 2D' },
         title: { en: 'Projectile motion', es: 'Movimiento parabólico' },
         summary: {
           en: 'Horizontal launch of a marble and a ping-pong ball from the edge of the table.',
@@ -82,6 +86,7 @@ export const labs: Lab[] = [
       },
       {
         id: 'newton2', slug: 'segunda-ley', guide: 3, thumb: 'pulley', status: 'ready', source: mecanica,
+        topic: { en: 'Dynamics', es: 'Dinámica' },
         title: { en: 'Force and acceleration', es: 'Relación fuerza–aceleración' },
         summary: {
           en: 'A DigiCart on a levelled rail is pulled by a hanging canister: measure force and acceleration and test Newton’s second law.',
@@ -90,6 +95,7 @@ export const labs: Lab[] = [
       },
       {
         id: 'friction', slug: 'rozamiento', guide: 4, thumb: 'block', status: 'ready', source: mecanica,
+        topic: { en: 'Friction', es: 'Rozamiento' },
         title: { en: 'Friction force', es: 'Fuerza de rozamiento' },
         summary: {
           en: 'Static and kinetic friction: a block on paper pulled with spring scales and bars sliding down a raised rail.',
@@ -98,6 +104,7 @@ export const labs: Lab[] = [
       },
       {
         id: 'parametric-resonance', slug: 'parametric-resonance', thumb: 'spring', status: 'ready',
+        topic: { en: 'Oscillations', es: 'Oscilaciones' },
         title: { en: 'Parametric resonance: the elastic pendulum', es: 'Resonancia paramétrica: el péndulo elástico' },
         summary: {
           en: 'A smartphone hangs from a spring: watch energy flow between stretching and swinging at the 2:1 resonance.',
@@ -110,6 +117,7 @@ export const labs: Lab[] = [
       },
       {
         id: 'pendulum-incline', slug: 'pendulum-incline', thumb: 'cart-pendulum', status: 'ready', source: mecanica,
+        topic: { en: 'Non-inertial frames', es: 'Sistemas no inerciales' },
         title: { en: 'Physical pendulum on an accelerating cart', es: 'Péndulo físico sobre un carrito acelerado' },
         summary: {
           en: 'A pendulum on a cart rolling down an incline, seen from the lab frame and from the cart.',
@@ -129,6 +137,7 @@ export const labs: Lab[] = [
     experiments: [
       {
         id: 'x-ray', slug: 'x-ray', thumb: 'crystal', status: 'ready',
+        topic: { en: 'X-rays', es: 'Rayos X' },
         title: { en: 'X-ray lab: Bragg diffraction and attenuation', es: 'Laboratorio de rayos X: difracción de Bragg y atenuación' },
         summary: {
           en: 'Bragg reflection of Mo Kα and Kβ X-rays at an NaCl crystal, on a simulated X-ray apparatus.',
@@ -138,6 +147,7 @@ export const labs: Lab[] = [
       },
       {
         id: 'photoelectric', slug: 'photoelectric', thumb: 'photocell', status: 'ready',
+        topic: { en: 'Quantum physics', es: 'Física cuántica' },
         title: { en: 'Photoelectric effect: Planck’s constant', es: 'Efecto fotoeléctrico: constante de Planck' },
         summary: {
           en: 'A mercury lamp, a prism and a photocell: find the limit voltage for each line and determine h.',
@@ -151,9 +161,3 @@ export const labs: Lab[] = [
 
 /** Experiments that are open now (the "soon" ones are not counted on the lab card). */
 export const readyCount = (lab: Pick<Lab, 'experiments'>): number => lab.experiments.filter((x) => x.status === 'ready').length
-
-export const GITHUB_OWNER = 'kairi99'
-export const repoUrl = (repo: string): string => `https://github.com/${GITHUB_OWNER}/${repo}`
-/** Source repositories used by the ready experiments, without duplicates. */
-export const sourceRepos = (all: readonly Lab[] = labs): string[] =>
-  [...new Set(all.flatMap((l) => l.experiments.flatMap((x) => (x.source ? [x.source.repo] : []))))]

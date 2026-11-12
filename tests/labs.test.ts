@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { labs, readyCount, repoUrl, sourceRepos, type Text } from '../src/labs.ts'
+import { labs, readyCount, type Text } from '../src/labs.ts'
 
 const texts = (t: Text): boolean => t.en.trim() !== '' && t.es.trim() !== ''
 const all = labs.flatMap((l) => l.experiments.map((x) => ({ lab: l, x })))
@@ -18,7 +18,7 @@ describe('labs data', () => {
   })
   it('has both languages everywhere', () => {
     for (const l of labs) { expect(texts(l.title)).toBe(true); expect(texts(l.summary)).toBe(true) }
-    for (const { x } of all) { expect(texts(x.title)).toBe(true); expect(texts(x.summary)).toBe(true) }
+    for (const { x } of all) { expect(texts(x.title)).toBe(true); expect(texts(x.summary)).toBe(true); expect(texts(x.topic), x.id).toBe(true) }
   })
   it('has a source for every ready experiment, and build or folder in it', () => {
     for (const { x } of all.filter(({ x }) => x.status === 'ready')) {
@@ -39,8 +39,8 @@ describe('labs data', () => {
     expect(readyCount(labs[0]!)).toBe(6)
     expect(readyCount(labs[1]!)).toBe(2)
   })
-  it('builds repo urls', () => {
-    expect(repoUrl('mecanica-labs')).toBe('https://github.com/kairi99/mecanica-labs')
-    expect(sourceRepos()).toEqual(['mecanica-labs', 'parametricResonance', 'AtomicSimulation', 'photoelectric-sim'])
+  it('names the four source repositories (used by the assemble script)', () => {
+    const repos = [...new Set(all.flatMap(({ x }) => (x.source ? [x.source.repo] : [])))]
+    expect(repos).toEqual(['mecanica-labs', 'parametricResonance', 'AtomicSimulation', 'photoelectric-sim'])
   })
 })
