@@ -1,0 +1,74 @@
+name: deploy
+
+# Builds the hub and the four source simulations (checked out next to it) and publishes the assembled dist/ to GitHub Pages.
+# Triggers: push to main, manual run, a nightly build, and `repository_dispatch` of type `sim-updated` (a source repo
+# can send it after its own deploy, see README).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '17 4 * * *'
+  repository_dispatch:
+    types: [sim-updated]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # The assembly script expects the sources as siblings of the hub: <workspace>/virtual-labs and <workspace>/<repo>.
+      - uses: actions/checkout@v7
+        with:
+          path: virtual-labs
+      - uses: actions/checkout@v7
+        with:
+          repository: kairi99/mecanica-labs
+          path: mecanica-labs
+      - uses: actions/checkout@v7
+        with:
+          repository: kairi99/parametricResonance
+          path: parametricResonance
+      - uses: actions/checkout@v7
+        with:
+          repository: kairi99/AtomicSimulation
+          path: AtomicSimulation
+      - uses: actions/checkout@v7
+        with:
+          repository: kairi99/photoelectric-sim
+          path: photoelectric-sim
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: virtual-labs/package-lock.json
+      - name: Install the hub
+        working-directory: virtual-labs
+        run: npm ci
+      - name: Test the hub
+        working-directory: virtual-labs
+        run: npm test
+      - name: Assemble (builds the hub and the sources; installs their dependencies)
+        working-directory: virtual-labs
+        run: npm run assemble
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: virtual-labs/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

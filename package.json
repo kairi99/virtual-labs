@@ -1,0 +1,22 @@
+{
+  "name": "virtual-labs",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "preview:site": "vite preview --outDir dist",
+    "test": "vitest run",
+    "assemble": "node scripts/assemble.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.2"
+  },
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/kairi99/virtual-labs.git" }
+}

@@ -1,0 +1,59 @@
+/* Hub pages: lab chooser and lab pages. Tokens only (tokens.css); controls from app.css. Adapted from mecanica-labs' landing.css. */
+.lp-top {
+  position: sticky; top: 0; z-index: var(--z-dock); min-height: calc(var(--touch) + var(--space-3)); display: flex; align-items: center; gap: var(--space-3);
+  padding: 0 var(--space-4); background: var(--bg); border-bottom: var(--stroke-hair) solid var(--separator);
+}
+.lp-brand { font: var(--text-headline); color: var(--label); text-decoration: none; min-height: var(--touch); display: inline-flex; align-items: center; }
+.lp-tools { display: flex; align-items: center; gap: var(--space-1); margin-left: auto; }
+.lp-tool {
+  min-height: var(--touch); min-width: var(--touch); padding: 0 var(--space-3); border: 0; border-radius: var(--radius-full); background: var(--fill);
+  cursor: pointer; touch-action: manipulation; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1);
+  font: var(--text-callout); font-weight: 600; color: var(--label); transition: background-color var(--dur-fast) var(--ease-out);
+}
+.lp-tool:hover { background: var(--separator); }
+
+.lp-main { max-width: 64rem; margin-inline: auto; padding: var(--space-6) var(--space-4) var(--space-5); display: flex; flex-direction: column; gap: var(--space-5); }
+.lp-hero { display: flex; flex-direction: column; gap: var(--space-2); max-width: 44rem; align-items: flex-start; }
+.lp-heading { font: var(--text-display); overflow-wrap: anywhere; }
+.lp-sub { font: var(--text-body); color: var(--label-2); }
+.lp-back { display: inline-flex; align-items: center; min-height: var(--touch); gap: var(--space-1); font: var(--text-callout); font-weight: 600; text-decoration: none; padding-right: var(--space-3); border-radius: var(--radius-s); }
+.lp-back:hover { text-decoration: underline; }
+
+.lp-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); }
+.lp-card {
+  height: 100%; display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4);
+  background: var(--surface); border: var(--stroke-hair) solid var(--separator); border-radius: var(--radius-l); box-shadow: var(--shadow-1);
+}
+.lp-card-soon { background: var(--surface-2); }
+.lp-card-soon .lp-thumb { opacity: 0.6; }
+.lp-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.lp-guide { font: var(--text-footnote); font-weight: 600; color: var(--label-2); text-transform: uppercase; letter-spacing: 0.04em; }
+.lp-title { font: var(--text-title); overflow-wrap: anywhere; }
+.lp-summary { font: var(--text-callout); color: var(--label-2); flex: 1 1 auto; }
+.lp-action { align-self: flex-start; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; min-width: 7rem; }
+.lp-card-soon .lp-action { color: var(--label-2); }
+.lp-credits { display: flex; flex-direction: column; gap: var(--space-2); }
+.lp-credits a { display: inline-flex; align-items: center; min-height: var(--touch); }
+.lp-source-list { display: flex; flex-wrap: wrap; gap: 0 var(--space-4); list-style: none; margin: 0; padding: 0; }
+.lp-noscript { padding: var(--space-4); max-width: 64rem; margin-inline: auto; }
+
+/* card thumbnails: painted with tokens, so they follow the theme */
+.lp-thumb, .hub-thumb { display: block; width: 100%; height: auto; border-radius: var(--radius-m); }
+.th-bg { fill: var(--surface-2); }
+.lp-card-soon .th-bg { fill: var(--surface); }
+.th-ground { stroke: var(--label-3); stroke-width: 1.5; }
+.th-leg { fill: var(--label-3); }
+.th-rail { stroke: var(--label-2); stroke-width: 5; stroke-linecap: round; }
+.th-line { stroke: var(--label-3); stroke-width: 1.5; }
+.th-body { fill: var(--surface); stroke: var(--label-2); stroke-width: 1.5; }
+.th-wheel { fill: var(--label-2); }
+.th-accent { fill: var(--accent); }
+.th-dots { stroke: var(--accent); stroke-width: 2.5; stroke-dasharray: 0.1 7; stroke-linecap: round; }
+.th-needle { stroke: var(--needle-red); stroke-width: 3; stroke-linecap: round; }
+.th-ring { fill: none; stroke: var(--label-2); stroke-width: 3; }
+.th-paper { fill: var(--label-2); }
+.th-spring { stroke: var(--label-2); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.th-wedge { fill: var(--label-3); opacity: 0.45; }
+.th-beam { stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
+.th-beam-out { stroke-dasharray: 8 6; }
+.th-dot { fill: var(--accent); }
