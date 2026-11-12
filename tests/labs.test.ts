@@ -28,7 +28,7 @@ describe('labs data', () => {
   })
   it('lists the expected content', () => {
     expect(labs.map((l) => l.slug)).toEqual(['mechanics', 'atomic'])
-    expect(all.filter(({ x }) => x.status === 'soon').map(({ x }) => x.slug)).toEqual(['pendulum-incline'])
+    expect(all.filter(({ x }) => x.status === 'soon').map(({ x }) => x.slug)).toEqual([])
     expect(all.length).toBe(8)
   })
   it('does not collide with the files of the hub or of a lab-mounted source', () => {
@@ -36,7 +36,7 @@ describe('labs data', () => {
     for (const { x } of all) expect(['assets', 'help', 'favicon.svg', 'index.html']).not.toContain(x.slug)
   })
   it('counts only ready experiments on a lab card', () => {
-    expect(readyCount(labs[0]!)).toBe(5)
+    expect(readyCount(labs[0]!)).toBe(6)
     expect(readyCount(labs[1]!)).toBe(2)
   })
   it('builds repo urls', () => {

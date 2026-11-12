@@ -17,7 +17,7 @@ describe('planAssembly', () => {
     expect(s.from).toBe(join('/src', 'mecanica-labs', 'dist'))
     expect(s.to).toBe(join(dist, 'mechanics'))
     expect(s.exclude).toEqual(['index.html'])
-    expect(s.expect).toEqual(['mruv', 'parabolico', 'segunda-ley', 'rozamiento'].map((x) => join(dist, 'mechanics', x, 'index.html')))
+    expect(s.expect).toEqual(['mruv', 'parabolico', 'segunda-ley', 'rozamiento', 'pendulum-incline'].map((x) => join(dist, 'mechanics', x, 'index.html')))
   })
   it('copies the plain-JS simulator without tests, dev, tools and README', () => {
     const s = by('parametricResonance')

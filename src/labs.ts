@@ -109,7 +109,7 @@ export const labs: Lab[] = [
         },
       },
       {
-        id: 'pendulum-incline', slug: 'pendulum-incline', thumb: 'cart-pendulum', status: 'soon',
+        id: 'pendulum-incline', slug: 'pendulum-incline', thumb: 'cart-pendulum', status: 'ready', source: mecanica,
         title: { en: 'Physical pendulum on an accelerating cart', es: 'Péndulo físico sobre un carrito acelerado' },
         summary: {
           en: 'A pendulum on a cart rolling down an incline, seen from the lab frame and from the cart.',
