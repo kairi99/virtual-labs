@@ -10,7 +10,7 @@ under one site: choose a laboratory, then an experiment. Stack: Vite + vanilla T
 - `src/labs.ts` is the single place for labs and experiments. Pages, build inputs and the assembly plan derive from it.
   Keep it erasable TypeScript (Node imports it directly in `scripts/assemble.mjs`).
 - Real static pages, no router: `/index.html` (hand-written), `/<lab>/index.html` (virtual inputs generated in `vite.config.ts`
-  from `scripts/pages.ts`). Card links are relative, end with a slash and carry `?lang=` (`src/links.ts`).
+  from `scripts/pages.ts`). Card links are relative, end with a slash and carry `?lang=` (and `&theme=` when explicit) (`src/links.ts`).
 - A mecanica-labs experiment links back to `../index.html`, which must stay the hub's lab page `/mechanics/`.
 - Hub files go to `dist/hub-assets/` (never `assets/` or `favicon.svg` at a lab root: mecanica-labs owns those). The assembly refuses to overwrite.
 - `assemble` sets `<meta name="vlabs-home">` to `../` in the copied index.html of the single-experiment sources (pure `setHomeMeta` in `scripts/plan.ts`).
