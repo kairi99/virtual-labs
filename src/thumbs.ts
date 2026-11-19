@@ -170,9 +170,31 @@ function photocellDrawing(): SVGElement[] {
   ]
 }
 
+function interferometerDrawing(): SVGElement[] {
+  // a Michelson interferometer seen from above: laser on the left, beam splitter (diamond) at the corner of the L, a mirror
+  // at the end of each arm, a photodetector below the splitter and a small wave travelling under the long arm
+  const sx = 110, sy = 70, r = 9, mx = 262, my = 16
+  const wave: string[] = []
+  for (let x = 164; x <= 284; x += 4) wave.push(`${x},${(102 + 5 * Math.sin(((x - 164) / 40) * 2 * Math.PI)).toFixed(1)}`)
+  return [
+    svg('rect', { x: 14, y: sy - 9, width: 32, height: 18, rx: 4, class: 'th-body' }),
+    svg('rect', { x: 14, y: sy - 9, width: 8, height: 18, rx: 3, class: 'th-accent' }),
+    svg('line', { x1: 46, y1: sy, x2: sx - r, y2: sy, class: 'th-beam' }),
+    svg('line', { x1: sx + r, y1: sy, x2: mx - 3, y2: sy, class: 'th-beam' }),
+    svg('line', { x1: sx, y1: sy - r, x2: sx, y2: my + 5, class: 'th-beam' }),
+    svg('rect', { x: mx, y: sy - 11, width: 5, height: 22, rx: 2, class: 'th-wheel' }),
+    svg('rect', { x: sx - 11, y: my - 5, width: 22, height: 5, rx: 2, class: 'th-wheel' }),
+    svg('polygon', { points: `${sx},${sy - r} ${sx + r},${sy} ${sx},${sy + r} ${sx - r},${sy}`, class: 'th-body' }),
+    svg('line', { x1: sx, y1: sy + r, x2: sx, y2: 96, class: 'th-line' }),
+    svg('circle', { cx: sx, cy: 104, r: 8, class: 'th-body' }),
+    svg('circle', { cx: sx, cy: 104, r: 3, class: 'th-dot' }),
+    svg('polyline', { points: wave.join(' '), class: 'th-spring', fill: 'none' }),
+  ]
+}
+
 const DRAW: Record<ThumbKind, () => SVGElement[]> = {
   incline: inclineDrawing, arc: arcDrawing, pulley: pulleyDrawing, block: blockDrawing,
-  spring: springDrawing, 'cart-pendulum': cartPendulumDrawing, crystal: crystalDrawing, photocell: photocellDrawing,
+  spring: springDrawing, 'cart-pendulum': cartPendulumDrawing, crystal: crystalDrawing, photocell: photocellDrawing, interferometer: interferometerDrawing,
 }
 
 export function thumb(kind: ThumbKind): SVGElement {

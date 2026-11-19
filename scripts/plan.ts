@@ -15,6 +15,8 @@ export interface Step {
   to: string
   /** Top-level names of `from` that are not copied. */
   exclude: string[]
+  /** When non-empty, only these top-level names of `from` are copied. */
+  include: string[]
   /** Files that must exist in `to` after the copy (one per ready experiment). */
   expect: string[]
   /** Copied index.html files that get the hub's home link (`vlabs-home` meta set to `../`): the single-experiment sources. */
@@ -22,7 +24,7 @@ export interface Step {
 }
 
 /**
- * One step per source site. Experiments that share a repo and a mount (the four mecanica-labs ones) make one step.
+ * One step per source site and destination. Experiments that share a repo and a mount (the mecanica-labs ones under /mechanics/) make one step; the same repo mounted for another lab is a second step (its build is shared, see `buildKey`).
  * `baseDir`: folder that holds the source checkouts. `distDir`: the hub's output folder.
  */
 export function planAssembly(labs: readonly Lab[], baseDir: string, distDir: string): Step[] {
@@ -45,17 +47,17 @@ export function planAssembly(labs: readonly Lab[], baseDir: string, distDir: str
         repo: s.repo, repoDir,
         buildCwd: s.build ? join(repoDir, s.build.cwd) : null,
         command: s.build ? s.build.command : null,
-        from: join(repoDir, rel), to, exclude: s.exclude ?? [], expect: [expect], home,
+        from: join(repoDir, rel), to, exclude: s.exclude ?? [], include: s.include ?? [], expect: [expect], home,
       })
     }
   }
   return [...steps.values()]
 }
 
-/** True when a path (relative to the source folder) is one of the excluded top-level names or inside one. */
-export function isExcluded(relPath: string, exclude: readonly string[]): boolean {
+/** True when a path (relative to the source folder) is not copied: its top-level name is excluded, or `include` is set and lacks it. */
+export function isExcluded(relPath: string, exclude: readonly string[], include: readonly string[] = []): boolean {
   const top = relPath.split(sep)[0] ?? ''
-  return top !== '' && exclude.includes(top)
+  return top !== '' && (exclude.includes(top) || (include.length > 0 && !include.includes(top)))
 }
 
 /** Base directory of the source checkouts: --base flag, then SOURCES_DIR, then the hub's parent folder. */
@@ -85,3 +87,6 @@ export function setHomeMeta(html: string, href: string = HOME_HREF): string {
   if (!HOME_META.test(html)) throw new Error('no <meta name="vlabs-home" content=""> tag found')
   return html.replace(HOME_META, (_m, a: string, b: string) => `${a}${href}${b}`)
 }
+
+/** Steps with the same key share one build (the same repo built for two labs). */
+export const buildKey = (s: Pick<Step, 'buildCwd' | 'command'>): string => `${s.buildCwd}\0${s.command}`

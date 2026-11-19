@@ -2,7 +2,7 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { labs } from '../src/labs.ts'
 import { labPageHtml } from '../scripts/pages.ts'
-import { isExcluded, planAssembly, resolveBaseDir, setHomeMeta } from '../scripts/plan.ts'
+import { buildKey, isExcluded, planAssembly, resolveBaseDir, setHomeMeta } from '../scripts/plan.ts'
 
 const base = join('/src'), dist = join('/hub', 'dist')
 const steps = planAssembly(labs, base, dist)
@@ -10,14 +10,29 @@ const by = (repo: string) => steps.find((s) => s.repo === repo)!
 
 describe('planAssembly', () => {
   it('makes one step per source site', () => {
-    expect(steps.map((s) => s.repo)).toEqual(['mecanica-labs', 'parametricResonance', 'AtomicSimulation', 'photoelectric-sim'])
+    expect(steps.map((s) => s.repo)).toEqual(['mecanica-labs', 'parametricResonance', 'AtomicSimulation', 'photoelectric-sim', 'mecanica-labs'])
   })
   it('copies mecanica-labs into the lab folder without its index.html', () => {
     const s = by('mecanica-labs')
     expect(s.from).toBe(join('/src', 'mecanica-labs', 'dist'))
     expect(s.to).toBe(join(dist, 'mechanics'))
-    expect(s.exclude).toEqual(['index.html'])
+    expect(s.exclude).toEqual(['index.html', 'gravitational-waves', 'gw'])
     expect(s.expect).toEqual(['mruv', 'parabolico', 'segunda-ley', 'rozamiento', 'pendulum-incline'].map((x) => join(dist, 'mechanics', x, 'index.html')))
+  })
+  it('keeps the detector out of /mechanics/ and feeds /gravitation/ from the same build', () => {
+    const m = steps[0]!, g = steps[4]!
+    expect(m.exclude).toEqual(expect.arrayContaining(['gravitational-waves', 'gw']))
+    expect(isExcluded('gravitational-waves', m.exclude, m.include)).toBe(true)
+    expect(isExcluded('mruv', m.exclude, m.include)).toBe(false)
+    expect(g.repo).toBe('mecanica-labs')
+    expect(g.to).toBe(join(dist, 'gravitation'))
+    expect(g.from).toBe(m.from)
+    expect(g.expect).toEqual([join(dist, 'gravitation', 'gravitational-waves', 'index.html')])
+    expect(g.home).toEqual([])
+    for (const n of ['gravitational-waves', 'gw', 'assets', 'favicon.svg']) expect(isExcluded(n, g.exclude, g.include)).toBe(false)
+    for (const n of ['mruv', 'rozamiento', 'index.html']) expect(isExcluded(n, g.exclude, g.include)).toBe(true)
+    expect(buildKey(g)).toBe(buildKey(m))
+    expect(buildKey(by('photoelectric-sim'))).not.toBe(buildKey(m))
   })
   it('copies the plain-JS simulator without tests, dev, tools and README', () => {
     const s = by('parametricResonance')

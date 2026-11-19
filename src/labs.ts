@@ -4,7 +4,7 @@
 export type Lang = 'en' | 'es'
 export interface Text { en: string; es: string }
 
-export type ThumbKind = 'incline' | 'arc' | 'pulley' | 'block' | 'spring' | 'cart-pendulum' | 'crystal' | 'photocell'
+export type ThumbKind = 'incline' | 'arc' | 'pulley' | 'block' | 'spring' | 'cart-pendulum' | 'crystal' | 'photocell' | 'interferometer'
 
 /** Where an experiment's site comes from and how it is built and mounted. */
 export interface Source {
@@ -24,6 +24,8 @@ export interface Source {
   mount: 'experiment' | 'lab'
   /** Top-level files or folders of the source that are not copied. */
   exclude?: string[]
+  /** When set, only these top-level files or folders are copied (lets one build feed two labs; the build runs once). */
+  include?: string[]
 }
 
 export interface Experiment {
@@ -53,7 +55,15 @@ const mecanica: Source = {
   repo: 'mecanica-labs',
   build: { cwd: '.', command: 'npm run build', out: 'dist' },
   mount: 'lab',
-  exclude: ['index.html'], // the hub's own lab page lives at /mechanics/
+  // the hub's own lab page lives at /mechanics/; the gravitational-wave detector (and its data) is served under /gravitation/
+  exclude: ['index.html', 'gravitational-waves', 'gw'],
+}
+
+// The same mecanica-labs build, but only the detector, its runtime data and the shared assets, mounted at /gravitation/.
+const gravitationSource: Source = {
+  ...mecanica,
+  exclude: undefined,
+  include: ['gravitational-waves', 'gw', 'assets', 'favicon.svg'],
 }
 
 export const labs: Lab[] = [
@@ -154,6 +164,26 @@ export const labs: Lab[] = [
           es: 'Una lámpara de mercurio, un prisma y una fotocelda: halla el voltaje límite de cada línea y determina h.',
         },
         source: { repo: 'photoelectric-sim', build: { cwd: '.', command: 'npm run build', out: 'dist' }, mount: 'experiment' },
+      },
+    ],
+  },
+  {
+    id: 'gravitation',
+    slug: 'gravitation',
+    title: { en: 'Gravitation and Relativity', es: 'Gravitación y Relatividad' },
+    summary: {
+      en: 'Gravity beyond Newton: detect gravitational waves with a laser interferometer.',
+      es: 'La gravedad más allá de Newton: detecta ondas gravitacionales con un interferómetro láser.',
+    },
+    experiments: [
+      {
+        id: 'gw', slug: 'gravitational-waves', thumb: 'interferometer', status: 'ready', source: gravitationSource,
+        topic: { en: 'Gravitational waves', es: 'Ondas gravitacionales' },
+        title: { en: 'Gravitational-wave detector', es: 'Detector de ondas gravitacionales' },
+        summary: {
+          en: 'Operate a laser interferometer, study its noise and find a black-hole merger in real detector data.',
+          es: 'Opera un interferómetro láser, estudia su ruido y encuentra la fusión de dos agujeros negros en datos reales de un detector.',
+        },
       },
     ],
   },
