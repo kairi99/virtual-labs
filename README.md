@@ -20,6 +20,13 @@ to `../index.html?lang=<lang>` on its own.
 
 English by default, Spanish with the toggle or `?lang=es`. Light, dark or automatic theme. No external requests.
 
+Cards: a chooser card has a title link and an "Enter laboratory" link to the lab page, plus one link per experiment that opens it
+directly; an experiment card on a lab page has a title link and an "Open" link. The title link is stretched over the card as a big
+click area; the other links sit above it, so nothing interactive is covered. Experiment links are relative, end with a slash and
+carry `?lang=`, plus `&theme=light|dark` when the hub's theme is explicit (none for automatic); the simulations store them and drop
+them from their address. The hub does the same with its own `?lang=` / `?theme=` (the simulations' back links): it stores them and
+removes them with `history.replaceState`.
+
 ## Run
 
 ```bash

@@ -6,8 +6,8 @@ import './styles/hub.css'
 import { el, svg } from './dom.ts'
 import { fmt, t } from './i18n.ts'
 import { labs, readyCount, type Experiment, type Lab, type Lang } from './labs.ts'
-import { chooserHref, experimentHref, labHref } from './links.ts'
-import { loadLang, loadTheme, saveLang, saveTheme, type Theme } from './persist.ts'
+import { chooserHref, experimentHref, labCardLinks, labHref } from './links.ts'
+import { consumeParams, loadLang, loadTheme, saveLang, saveTheme, type Theme } from './persist.ts'
 import { S } from './strings.ts'
 import { applyTheme, nextTheme, themeIcon } from './theme.ts'
 import { thumb } from './thumbs.ts'
@@ -26,6 +26,7 @@ function brandMark(): SVGElement {
 function run(): void {
   const page = document.body.dataset.page
   const lab: Lab | undefined = page === 'lab' ? labs.find((l) => l.slug === document.body.dataset.lab) : undefined
+  consumeParams()
   let lang: Lang = loadLang()
   let theme: Theme = loadTheme()
 
@@ -65,7 +66,8 @@ function run(): void {
   skip.addEventListener('click', (e) => { e.preventDefault(); main.focus() })
   root.append(skip, header, main, footer)
 
-  // ---- cards: one real link per card (the title link is stretched over the card by CSS) ----
+  // ---- cards: the title link is stretched over the card by CSS (a large click area); the action link and the
+  // experiment links of a lab card sit above that overlay (z-index), so nothing interactive is covered ----
   interface Card { title: HTMLElement; summary: HTMLElement; kicker: HTMLElement; action: HTMLElement; link?: HTMLAnchorElement; list?: HTMLUListElement; soon: boolean; href?: (l: Lang) => string }
   const cards: Card[] = []
   function addCard(opts: { thumbKind: Parameters<typeof thumb>[0]; href?: (l: Lang) => string; soon: boolean; withList: boolean; id: string }): void {
@@ -75,11 +77,10 @@ function run(): void {
     const kicker = el('p', 'lp-kicker')
     const title = el('h2', 'lp-title')
     const summary = el('p', 'lp-summary')
-    const c: Card = { title, summary, kicker, action: el('span', opts.soon ? 'chip' : 'btn btn-primary lp-action'), soon: opts.soon, href: opts.href }
+    const c: Card = { title, summary, kicker, action: el(opts.soon ? 'span' : 'a', opts.soon ? 'chip' : 'btn btn-primary lp-action'), soon: opts.soon, href: opts.href }
     if (!opts.soon) {
       c.link = el('a', 'lp-link')
       title.append(c.link)
-      c.action.setAttribute('aria-hidden', 'true')
     } else c.action.dataset.soon = '1'
     body.append(kicker, title, summary)
     if (opts.withList) { c.list = el('ul', 'lp-inside'); body.append(c.list) }
@@ -92,7 +93,7 @@ function run(): void {
 
   if (lab) {
     for (const x of lab.experiments) {
-      addCard({ id: x.id, thumbKind: x.thumb, soon: x.status === 'soon', withList: false, href: x.status === 'ready' ? (l) => experimentHref(x, l) : undefined })
+      addCard({ id: x.id, thumbKind: x.thumb, soon: x.status === 'soon', withList: false, href: x.status === 'ready' ? (l) => experimentHref(x, l, theme) : undefined })
     }
   } else {
     for (const l of labs) addCard({ id: l.id, thumbKind: l.experiments[0]!.thumb, soon: false, withList: true, href: (lg) => labHref(l, lg) })
@@ -138,7 +139,12 @@ function run(): void {
       if ('experiments' in item) {
         const n = readyCount(item)
         c.kicker.textContent = fmt(t(n === 1 ? S.experimentCount.one : S.experimentCount.many, lang), { n })
-        c.list?.replaceChildren(...item.experiments.filter((x) => x.status === 'ready').map((x) => el('li', undefined, t(x.title, lang))))
+        const hrefs = labCardLinks(item, lang, theme).experiments
+        c.list?.replaceChildren(...item.experiments.filter((x) => x.status === 'ready').map((x, k) => {
+          const li = el('li')
+          li.append(el('a', 'lp-exp', t(x.title, lang), { href: hrefs[k]!.href }))
+          return li
+        }))
         c.list?.setAttribute('aria-label', t(S.inside, lang))
       } else {
         const topic = t(item.topic, lang)
@@ -147,7 +153,10 @@ function run(): void {
       if (c.soon) c.action.textContent = t(S.soon, lang)
       else if (c.link && c.href) {
         c.link.setAttribute('href', c.href(lang))
-        c.action.textContent = lab ? t(S.open, lang) : t(S.enterLab, lang)
+        const verb = lab ? t(S.open, lang) : t(S.enterLab, lang)
+        c.action.textContent = verb
+        c.action.setAttribute('href', c.link.getAttribute('href')!)
+        c.action.setAttribute('aria-label', `${verb}: ${t(item.title, lang)}`)
       }
     })
   }
