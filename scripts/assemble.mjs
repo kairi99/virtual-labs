@@ -8,7 +8,7 @@ import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, write
 import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { labs } from '../src/labs.ts'
-import { isExcluded, planAssembly, resolveBaseDir, setHomeMeta } from './plan.ts'
+import { buildKey, isExcluded, planAssembly, resolveBaseDir, setHomeMeta } from './plan.ts'
 
 const hubDir = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const distDir = join(hubDir, 'dist')
@@ -32,8 +32,10 @@ for (const s of steps) {
 }
 
 // 2. build the sources
+const built = new Set()
 for (const s of steps) {
-  if (!s.command || skipSourceBuild) continue
+  if (!s.command || skipSourceBuild || built.has(buildKey(s))) continue
+  built.add(buildKey(s))
   if (!existsSync(join(s.buildCwd, 'node_modules'))) run('npm ci', s.buildCwd, `${s.repo}: install`)
   run(s.command, s.buildCwd, `${s.repo}: build`)
 }
@@ -53,7 +55,7 @@ for (const s of steps) {
     // with another source) an error instead of a silent overwrite.
     mkdirSync(s.to, { recursive: true })
     for (const name of readdirSync(s.from)) {
-      if (isExcluded(name, s.exclude)) continue
+      if (isExcluded(name, s.exclude, s.include)) continue
       cpSync(join(s.from, name), join(s.to, name), { recursive: true, force: false, errorOnExist: true })
     }
   } catch (e) {

@@ -12,6 +12,7 @@ copied into the hub's `dist/` by `scripts/assemble.mjs`.
 | `/mechanics/parametric-resonance/` | parametricResonance (`simulator/`, private) |
 | `/atomic/x-ray/` | AtomicSimulation (`web/`, private) |
 | `/atomic/photoelectric/` | photoelectric-sim (private) |
+| `/gravitation/gravitational-waves/` | mecanica-labs (private; the same build as `/mechanics/`, only this experiment, see "Mounts") |
 
 Hosted here, the three simulations without their own link back (parametricResonance, AtomicSimulation, photoelectric-sim)
 show an "All experiments" link to their lab page: `assemble` sets `<meta name="vlabs-home" content="">` to `../` in the copied
@@ -35,6 +36,15 @@ npm run dev      # the hub only (the experiment links 404 in dev: use the assemb
 npm test         # Vitest: data, links, language, assembly path mapping
 npm run build    # tsc && vite build -> dist/ with the hub pages ONLY (no simulations: that is expected)
 ```
+
+## Mounts
+
+A source has `mount: 'experiment'` (its site goes to `/<lab>/<experiment>/`) or `mount: 'lab'` (its build holds one folder per
+experiment slug plus shared `assets/` and is copied to `/<lab>/`). One lab-type build can feed two labs: `exclude` leaves
+top-level names out, and `include` (when set) copies only those names. mecanica-labs is mounted twice from one build: at
+`/mechanics/` excluding `index.html`, `gravitational-waves` and `gw`, and at `/gravitation/` including only `gravitational-waves`,
+`gw` (its runtime data), `assets` and `favicon.svg`. `assemble` builds each distinct build command once. The experiment's
+"All experiments" link is its own relative `../index.html`, which is the lab page in both places.
 
 ## Assemble the whole site
 

@@ -27,9 +27,9 @@ describe('labs data', () => {
     }
   })
   it('lists the expected content', () => {
-    expect(labs.map((l) => l.slug)).toEqual(['mechanics', 'atomic'])
+    expect(labs.map((l) => l.slug)).toEqual(['mechanics', 'atomic', 'gravitation'])
     expect(all.filter(({ x }) => x.status === 'soon').map(({ x }) => x.slug)).toEqual([])
-    expect(all.length).toBe(8)
+    expect(all.length).toBe(9)
   })
   it('does not collide with the files of the hub or of a lab-mounted source', () => {
     for (const l of labs) expect(['hub-assets', 'assets', 'src']).not.toContain(l.slug)
@@ -38,6 +38,7 @@ describe('labs data', () => {
   it('counts only ready experiments on a lab card', () => {
     expect(readyCount(labs[0]!)).toBe(6)
     expect(readyCount(labs[1]!)).toBe(2)
+    expect(readyCount(labs[2]!)).toBe(1)
   })
   it('names the four source repositories (used by the assemble script)', () => {
     const repos = [...new Set(all.flatMap(({ x }) => (x.source ? [x.source.repo] : [])))]
